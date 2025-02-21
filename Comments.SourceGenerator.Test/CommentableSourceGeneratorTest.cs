@@ -10,7 +10,7 @@ public class CommentableSourceGeneratorTest
 
         public class EntityBase
         {
-            public int Id { get; set; } 
+            public string Id { get; set; } 
         }
 
         public class User : EntityBase
@@ -32,11 +32,12 @@ public class CommentableSourceGeneratorTest
     private const string DbContextCode = 
         """
         using Microsoft.EntityFrameworkCore;
+        using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
         using System;
 
         namespace Utest.Example;
 
-        public partial class TestDbContext : DbContext
+        public partial class TestDbContext : IdentityDbContext
         {
             public DbSet<Book> Books { get; set; }
             public DbSet<User> Users { get; set; }
@@ -72,10 +73,10 @@ public class CommentableSourceGeneratorTest
                                 public string Text { get; set; }
                         
                                 public Utest.Example.Book Entity { get; set; }
-                                public System.Int32 EntityId { get; set; }
+                                public System.String EntityId { get; set; }
                         
                                 public Utest.Example.User Commenter { get; set; }
-                                public System.Nullable<System.Int32> CommenterId { get; set; }
+                                public System.String CommenterId { get; set; }
                             }
                         }
                         """

@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -131,5 +132,19 @@ public class SourceGenerationHelper
 
         // return the final namespace
         return nameSpace;
+    }
+
+    public static IPropertySymbol? GetIdProperty(INamedTypeSymbol commenterType)
+    {
+        // Find the "Id" property inside CommenterType and its base classes
+        IPropertySymbol? idProperty = null;
+        for (var currentType = commenterType; currentType != null && idProperty == null; currentType = currentType.BaseType)
+        {
+            idProperty = currentType.GetMembers()
+                .OfType<IPropertySymbol>()
+                .FirstOrDefault(p => p.Name == "Id");
+        }
+
+        return idProperty;
     }
 }

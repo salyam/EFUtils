@@ -15,7 +15,8 @@ where TSourceGenerator : IIncrementalGenerator, new()
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90
                 .AddPackages(ImmutableArray.Create(
-                    new PackageIdentity("Microsoft.EntityFrameworkCore", "9.0") // Adjust version as needed
+                    new PackageIdentity("Microsoft.EntityFrameworkCore", "9.0"), 
+                    new PackageIdentity("Microsoft.AspNetCore.Identity.EntityFrameworkCore", "9.0")
             ));
 
             // Add a reference to a local project

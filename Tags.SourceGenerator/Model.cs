@@ -26,9 +26,7 @@ public class TaggableClassInfo : ClassInfo
         }
 
         // Find the property named "Id"
-        var idProperty = classSymbol.GetMembers()
-                                    .OfType<IPropertySymbol>()
-                                    .FirstOrDefault(p => p.Name == "Id");
+        var idProperty = SourceGenerationHelper.GetIdProperty(classSymbol);
 
         // Set ID property name and type
         if (idProperty != null)

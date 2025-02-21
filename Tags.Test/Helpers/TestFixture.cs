@@ -8,8 +8,16 @@ public sealed class TestFixture : IDisposable
     public string ConnectionString { get; private set; }
     public ServiceCollection Services { get; private set; } = new ServiceCollection();
     public List<Book> SeededData { get; } = [
-        new Book() { Id = 1, Title = "1984",  Author = "George Orwell"},
-        new Book() { Id = 2, Title = "To Kill a Mockingbird", Author =  "Harper Lee"}
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "1984", Author = "George Orwell" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "To Kill a Mockingbird", Author = "Harper Lee" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "Brave New World", Author = "Aldous Huxley" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "The Great Gatsby", Author = "F. Scott Fitzgerald" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "Moby-Dick", Author = "Herman Melville" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "Pride and Prejudice", Author = "Jane Austen" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "The Catcher in the Rye", Author = "J.D. Salinger" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "The Lord of the Rings", Author = "J.R.R. Tolkien" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "Fahrenheit 451", Author = "Ray Bradbury" },
+        new Book() { Id = Guid.NewGuid().ToString(), Title = "The Hobbit", Author = "J.R.R. Tolkien" }
     ];
 
     public TestFixture()

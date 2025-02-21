@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -5,6 +6,11 @@ namespace Salyam.EFUtils.Comments.SourceGenerator;
 
 public class SourceGenerationHelper
 {
+
+    private static string GetCommenterIdField(CommentableClassInfo commentable) => 
+        commentable.CommenterTypeInfo.IdPropertyIsNullable 
+            ? $"public {commentable.CommenterTypeInfo.IdPropertyType} CommenterId {{ get; set; }}"
+            : $"public System.Nullable<{commentable.CommenterTypeInfo.IdPropertyType}> CommenterId {{ get; set; }}" ;
 
     public static string GetCommentModelCode(CommentableClassInfo commentable) => 
     $$"""
@@ -22,7 +28,7 @@ public class SourceGenerationHelper
             public {{commentable.TargetTypeInfo.IdPropertyType}} EntityId { get; set; }
 
             public {{commentable.CommenterTypeInfo.Namespace}}.{{commentable.CommenterTypeInfo.Name}} Commenter { get; set; }
-            public System.Nullable<{{commentable.CommenterTypeInfo.IdPropertyType}}> CommenterId { get; set; }
+            {{GetCommenterIdField(commentable)}}
         }
     }
     """;
@@ -135,7 +141,7 @@ public class SourceGenerationHelper
     """;
 
 
-    public static string GetNamespace(ClassDeclarationSyntax cls)
+    public static string GetNamespace(SyntaxNode cls)
     {
         // If we don't have a namespace at all we'll return an empty string
         // This accounts for the "default namespace" case
@@ -177,5 +183,19 @@ public class SourceGenerationHelper
 
         // return the final namespace
         return nameSpace;
+    }
+
+    public static IPropertySymbol? GetIdProperty(INamedTypeSymbol commenterType)
+    {
+        // Find the "Id" property inside CommenterType and its base classes
+        IPropertySymbol? idProperty = null;
+        for (var currentType = commenterType; currentType != null && idProperty == null; currentType = currentType.BaseType)
+        {
+            idProperty = currentType.GetMembers()
+                .OfType<IPropertySymbol>()
+                .FirstOrDefault(p => p.Name == "Id");
+        }
+
+        return idProperty;
     }
 }

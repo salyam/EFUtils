@@ -16,7 +16,7 @@ public class TagServiceTests
         var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
         var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == 1);
+        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
 
         // Act: tag the test book instance
         await tagService.TagEntityAsync(book, "Tag");
@@ -41,7 +41,7 @@ public class TagServiceTests
         var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
         var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == 1);
+        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
 
         // Act: tag and untag the test book instance
         await tagService.TagEntityAsync(book, "Tag");
@@ -65,7 +65,7 @@ public class TagServiceTests
         var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
         var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == 1);
+        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
 
         // Act: tag and untag the test book instance
         await tagService.TagEntityAsync(book, "Tag1");
@@ -87,7 +87,7 @@ public class TagServiceTests
         var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
         var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == 1);
+        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
 
         // Act: tag and untag the test book instance
         await tagService.TagEntityAsync(book, "Tag");

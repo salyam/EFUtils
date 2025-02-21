@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Salyam.EFUtils.Tags.Attributes;
 
@@ -5,7 +6,7 @@ namespace EFTagTest.Helpers;
 
 public class EntityBase
 {
-    public int Id { get; set; } 
+    public required string Id { get; set; } 
 }
 
 [Taggable]
@@ -16,14 +17,12 @@ public class Book : EntityBase
     public required string Author { get; set; } 
 }
 
-public partial class TestDbContext : DbContext
+public partial class TestDbContext : IdentityDbContext
 {
     public DbSet<Book> Books { get; set; }
 
     public TestDbContext()
-    {
-        
-    }
+    {}
 
     public TestDbContext(DbContextOptions options) : base(options)
     {
@@ -31,7 +30,6 @@ public partial class TestDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        base.OnConfiguring(optionsBuilder);
-        
+        base.OnConfiguring(optionsBuilder);  
     }
 }

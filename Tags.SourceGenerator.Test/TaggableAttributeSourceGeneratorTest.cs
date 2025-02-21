@@ -11,7 +11,7 @@ public class TaggableAttributeSourceGeneratorTest
         [Salyam.EFUtils.Tags.Attributes.Taggable]
         public partial class Book
         {
-            public int Id { get; set; }
+            public string Id { get; set; }
 
             public string Title { get; set; }
 
@@ -23,10 +23,11 @@ public class TaggableAttributeSourceGeneratorTest
         """
         using Microsoft.EntityFrameworkCore;
         using System;
+        using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
         namespace Utest.Example;
 
-        public partial class TestDbContext : DbContext
+        public partial class TestDbContext : IdentityDbContext
         {
             public DbSet<Book> Books { get; set; }
         }
@@ -71,7 +72,7 @@ public class TaggableAttributeSourceGeneratorTest
                                 public int TagId { get; set; }
 
                                 public Utest.Example.Book Entity { get; set; }
-                                public System.Int32 EntityId { get; set; }
+                                public System.String EntityId { get; set; }
                             }
                         }
                         """

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Salyam.EFUtils.Comments.Attributes;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace Salyam.EFUtils.Comments.Test.Helpers;
 
@@ -8,7 +10,7 @@ public class EntityBase
     public int Id { get; set; } 
 }
 
-[Commentable(typeof(User))]
+[Commentable(typeof(IdentityUser))]
 public class Book : EntityBase
 {
     public required string Title { get; set; } 
@@ -16,15 +18,9 @@ public class Book : EntityBase
     public required string Author { get; set; } 
 }
 
-public class User : EntityBase
-{
-    public required string Name { get; set; }
-}
-
-public partial class TestDbContext : DbContext
+public partial class TestDbContext : IdentityDbContext 
 {
     public DbSet<Book> Books { get; set; }
-    public DbSet<User> Users { get; set; }
 
     public TestDbContext() {}
 

@@ -31,11 +31,13 @@ public class EntityClassInfo : ClassInfo
 {
     public string IdPropertyType { get; set; } = "System.Int32";
     public string IdPropertyName { get; set; } = "Id";
+    public bool IdPropertyIsNullable { get; set; } = false;
     
-    public EntityClassInfo(string name, string @namespace, string modifiers, string idPropertyType, string idPropertyName) : base(name, @namespace, modifiers)
+    public EntityClassInfo(string name, string @namespace, string modifiers, string idPropertyType, string idPropertyName, bool idPropertyIsNullable) : base(name, @namespace, modifiers)
     {
         this.IdPropertyType = idPropertyType;
         this.IdPropertyName = idPropertyName;
+        this.IdPropertyIsNullable = idPropertyIsNullable;
     }
 
     public EntityClassInfo(SemanticModel model, ClassDeclarationSyntax cls) : base(cls)
@@ -47,14 +49,15 @@ public class EntityClassInfo : ClassInfo
         }
 
         // Find the property named "Id"
-        var idProperty = classSymbol.GetMembers()
-                                    .OfType<IPropertySymbol>()
-                                    .FirstOrDefault(p => p.Name == "Id");
+        var idProperty = SourceGenerationHelper.GetIdProperty(classSymbol) 
+            ?? throw new NotSupportedException($"Cannot find id property of commenter type {classSymbol.Name}.");
 
         // Set ID property name and type
         if (idProperty != null)
         {
             this.IdPropertyName = idProperty.Name;
+            // The ID property is nullable, if it is not a value type, or if it has a nullable annotation
+            this.IdPropertyIsNullable = !idProperty.Type.IsValueType || idProperty.Type.NullableAnnotation == NullableAnnotation.Annotated;
             if(!string.IsNullOrEmpty(idProperty.Type.ContainingNamespace.Name))
             {
                 this.IdPropertyType = idProperty.Type.ContainingNamespace.Name + '.' + idProperty.Type.Name;
@@ -86,26 +89,17 @@ public class CommentableClassInfo
         // Retrieve the CommenterType property from the attribute
         if (commentableAttribute.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol commenterType)
             throw new NotSupportedException($"Cannot determines 'Commenter' (context target symbol name: {ctx.TargetSymbol.Name}).");
-
-        // Find the "Id" property inside CommenterType and its base classes
-        IPropertySymbol? idProperty = null;
-        for(var currentType = commenterType; currentType != null && idProperty == null; currentType = currentType.BaseType)
-        {
-            idProperty = currentType.GetMembers()
-                .OfType<IPropertySymbol>()
-                .FirstOrDefault(p => p.Name == "Id");
-        }
-
-        if (idProperty == null)
-            throw new NotSupportedException($"Cannot find id property of commenter type {commenterType.Name}.");
+        var idProperty = SourceGenerationHelper.GetIdProperty(commenterType) 
+            ?? throw new NotSupportedException($"Cannot find id property of commenter type {commenterType.Name}.");
         
         var idType = idProperty.Type; // The type of the "Id" property
         this.CommenterTypeInfo = new EntityClassInfo(
-            name: commenterType.Name, 
-            @namespace: commenterType.ContainingNamespace.ToString(), 
-            modifiers: "", 
-            idPropertyType: idType.ContainingNamespace + "." + idType.Name, 
-            idPropertyName: "Id");
+            name: commenterType.Name,
+            @namespace: commenterType.ContainingNamespace.ToString(),
+            modifiers: "",
+            idPropertyType: idType.ContainingNamespace + "." + idType.Name,
+            idPropertyName: "Id",
+            idPropertyIsNullable: !idProperty.Type.IsValueType || idProperty.Type.NullableAnnotation == NullableAnnotation.Annotated);
     }
 }
 

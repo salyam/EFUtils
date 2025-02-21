@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -11,20 +12,43 @@ namespace Salyam.EFUtils.Comments.SourceGenerator;
 [Generator]
 public class CommentableSourceGenerator : IIncrementalGenerator
 {
+    private static bool InheritsFromDbContext(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
+    {
+        if (classDeclaration.BaseList == null)
+            return false;
+
+        foreach (var baseType in classDeclaration.BaseList.Types)
+        {
+            var baseTypeSymbol = semanticModel.GetTypeInfo(baseType.Type).Type;
+
+            // Traverse the inheritance hierarchy
+            while (baseTypeSymbol != null)
+            {
+                if (baseTypeSymbol.ToString() == "Microsoft.EntityFrameworkCore.DbContext")
+                    return true;
+
+                baseTypeSymbol = baseTypeSymbol.BaseType;
+            }
+        }
+
+        return false;
+    }
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Collect all DbContext-derived classes
-        var dbContextClasses = context.SyntaxProvider
+        // Collect all classes that are derived from something
+        var classDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (node, _) => 
-                    node is ClassDeclarationSyntax cls
-                    && cls.BaseList?.Types.Any(x => x.Type.ToString() == "DbContext") == true,
-                transform: static (ctx, _) => new DbContextClassInfo((ClassDeclarationSyntax)ctx.Node)
+                    node is ClassDeclarationSyntax cls 
+                    && cls.BaseList != null 
+                    && cls.BaseList.Types.Count > 0,
+                transform: static (ctx, _) => (ClassDeclarationSyntax)ctx.Node
             )
             .Collect();
         
         // Do a simple filter for enums
-        var taggableClasses = context.SyntaxProvider
+        var commentableClasses = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 fullyQualifiedMetadataName: typeof(CommentableAttribute).FullName,
                 predicate: static (_, _) => true,
@@ -32,28 +56,49 @@ public class CommentableSourceGenerator : IIncrementalGenerator
             .Collect();
 
         // Merge the collections and generate the final code
-        var combinedData  = dbContextClasses.Combine(taggableClasses);
+        var combinedData = context.CompilationProvider.Combine(classDeclarations.Combine(commentableClasses));
         
-        context.RegisterSourceOutput(combinedData, GenerateCode);
+        context.RegisterSourceOutput(combinedData, (ctx, source )=> 
+        {
+            var (compilation, (classDeclarations, commentableClassInfos)) = source;
+            var dbContextClasses = classDeclarations
+                .Where(x => InheritsFromDbContext(x, compilation.GetSemanticModel(x.SyntaxTree)))
+                .Select(x => new DbContextClassInfo(x))
+                .ToList();
+            if (dbContextClasses.Count == 0)
+            {
+                ctx.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(
+                    id: "EFUTILS001",
+                    title: "No DbContext descendant found",
+                    messageFormat: $"No DbContext descendant was found.",
+                    category: "Usage",
+                    defaultSeverity: DiagnosticSeverity.Error,
+                    isEnabledByDefault: true
+                    ),
+                    classDeclarations[0].GetLocation()
+                    ));
+            }
+            else
+            {
+                GenerateCode(ctx, dbContextClasses[0], commentableClassInfos);
+            }
+        });
     }
 
-    public static void GenerateCode(SourceProductionContext context, (ImmutableArray<DbContextClassInfo> dbContexts, ImmutableArray<CommentableClassInfo> commentables) data)
-    {
-        if (data.dbContexts.Length == 0)
-            return;
-        
-        foreach (var commentable in data.commentables)
+    public static void GenerateCode(SourceProductionContext context, DbContextClassInfo dbContextClassInfo, ImmutableArray<CommentableClassInfo> commentables)
+    {        
+        foreach (var commentable in commentables)
         {
             context.AddSource($"{commentable.TargetTypeInfo.Name}.CommentModel.Generated.cs", 
                 source: SourceGenerationHelper.GetCommentModelCode(commentable));
             context.AddSource($"{commentable.TargetTypeInfo.Name}.CommentServiceInterface.Generated.cs", 
                 source: SourceGenerationHelper.GetCommentInterfaceCode(commentable));
             context.AddSource($"{commentable.TargetTypeInfo.Name}.CommentServiceImplementation.Generated.cs", 
-                source: SourceGenerationHelper.GetCommentInterfaceImplementationCode(data.dbContexts[0], commentable));
+                source: SourceGenerationHelper.GetCommentInterfaceImplementationCode(dbContextClassInfo, commentable));
         }
 
-        GenerateDbContextFields(context, data.dbContexts[0], data.commentables);
-        GenerateServiceCollectionExtension(context, data.commentables);
+        GenerateDbContextFields(context, dbContextClassInfo, commentables);
+        GenerateServiceCollectionExtension(context, commentables);
     }
 
     private static void GenerateDbContextFields(SourceProductionContext context, DbContextClassInfo dbContext, ImmutableArray<CommentableClassInfo> commentables)
