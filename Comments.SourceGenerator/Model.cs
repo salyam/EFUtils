@@ -77,24 +77,27 @@ public class CommentableClassInfo
     {
         this.TargetTypeInfo = new EntityClassInfo(ctx.SemanticModel, (ClassDeclarationSyntax)ctx.TargetNode);
 
-        var commentableAttribute = (ctx.TargetSymbol as INamedTypeSymbol)!.GetAttributes()
-            .FirstOrDefault(a => a.AttributeClass?.Name == nameof(CommentableAttribute))!;
-        var commenterType = commentableAttribute.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
-        // Retrieve the CommenterType property from the attribute
-        /*INamedTypeSymbol? commenterType = null;
-        foreach (var namedArg in commentableAttribute.NamedArguments)
-        {
-            if (namedArg.Key == nameof(CommentableAttribute.CommenterType) && namedArg.Value.Value is INamedTypeSymbol typeSymbol)
-            {
-                commenterType = typeSymbol;
-                break;
-            }
-        }*/
+        if (ctx.TargetSymbol is not INamedTypeSymbol nts)
+            throw new NotSupportedException($"Context arget symbol is not 'INamedTypeSymbol' (context target symbol name: {ctx.TargetSymbol.Name}).");
 
-        // Find the "Id" property inside CommenterType
-        var idProperty = commenterType!.GetMembers()
-            .OfType<IPropertySymbol>()
-            .FirstOrDefault(p => p.Name == "Id");
+        var commentableAttribute = nts.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass?.Name == nameof(CommentableAttribute))!;
+
+        // Retrieve the CommenterType property from the attribute
+        if (commentableAttribute.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol commenterType)
+            throw new NotSupportedException($"Cannot determines 'Commenter' (context target symbol name: {ctx.TargetSymbol.Name}).");
+
+        // Find the "Id" property inside CommenterType and its base classes
+        IPropertySymbol? idProperty = null;
+        for(var currentType = commenterType; currentType != null && idProperty == null; currentType = currentType.BaseType)
+        {
+            idProperty = currentType.GetMembers()
+                .OfType<IPropertySymbol>()
+                .FirstOrDefault(p => p.Name == "Id");
+        }
+
+        if (idProperty == null)
+            throw new NotSupportedException($"Cannot find id property of commenter type {commenterType.Name}.");
         
         var idType = idProperty.Type; // The type of the "Id" property
         this.CommenterTypeInfo = new EntityClassInfo(

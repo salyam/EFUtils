@@ -3,20 +3,21 @@ using Salyam.EFUtils.Comments.Attributes;
 
 namespace Salyam.EFUtils.Comments.Test.Helpers;
 
-[Commentable(typeof(User))]
-public class Book
+public class EntityBase
 {
     public int Id { get; set; } 
+}
 
+[Commentable(typeof(User))]
+public class Book : EntityBase
+{
     public required string Title { get; set; } 
     
     public required string Author { get; set; } 
 }
 
-public class User
+public class User : EntityBase
 {
-    public int Id { get; set; } 
-
     public required string Name { get; set; }
 }
 

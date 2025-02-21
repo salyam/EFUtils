@@ -1,14 +1,16 @@
 using Microsoft.EntityFrameworkCore;
-using Salyam.EFTag;
 using Salyam.EFUtils.Tags.Attributes;
 
 namespace EFTagTest.Helpers;
 
-[Taggable]
-public class Book
+public class EntityBase
 {
     public int Id { get; set; } 
+}
 
+[Taggable]
+public class Book : EntityBase
+{
     public required string Title { get; set; } 
     
     public required string Author { get; set; } 

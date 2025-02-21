@@ -1,6 +1,6 @@
 ﻿using EFTagTest.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using Salyam.EFTag;
+using Salyam.EFUtils.Tags;
 
 namespace EFTagTest;
 

@@ -8,20 +8,21 @@ public class CommentableSourceGeneratorTest
         """
         namespace Utest.Example;
 
-        public class User
+        public class EntityBase
         {
-            public int Id { get; set; }
+            public int Id { get; set; } 
+        }
 
+        public class User : EntityBase
+        {
             public string Name { get; set; }
 
             public string Password { get; set; }
         }
 
         [Salyam.EFUtils.Comments.Attributes.Commentable(typeof(User))]
-        public partial class Book
+        public partial class Book : EntityBase
         {
-            public int Id { get; set; }
-
             public string Title { get; set; }
 
             public string Author { get; set; }
