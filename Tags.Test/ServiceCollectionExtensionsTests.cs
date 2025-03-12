@@ -14,7 +14,9 @@ public class ServiceCollectionExtensionsTests
         using var fixture = new TestFixture();
 
         // Act - use the extension method to add tagging services
-        fixture.Services.AddEfCoreTagging();
+        fixture.Services
+            .AddEfCoreTags<TestDbContext, Book>()
+            .AddEfCoreTags<TestDbContext, Article>();
 
         // Assert - check if the TagService is added with the correct type
         var tagService = fixture.Services.BuildServiceProvider()
@@ -30,7 +32,9 @@ public class ServiceCollectionExtensionsTests
         using var fixture = new TestFixture();
 
         // Act - use the extension method and get the returned value
-        var result = fixture.Services.AddEfCoreTagging();
+        var result = fixture.Services
+            .AddEfCoreTags<TestDbContext, Book>()
+            .AddEfCoreTags<TestDbContext, Article>();
 
         // Assert - check if the returned object is the same as the service collection
         Assert.Same(fixture.Services, result);

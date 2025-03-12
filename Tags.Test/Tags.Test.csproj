@@ -25,8 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tags.Attributes\Tags.Attributes.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="true"/>
-    <ProjectReference Include="..\Tags.SourceGenerator\Tags.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="..\Tags\Tags.csproj" />
   </ItemGroup>
 
 </Project>

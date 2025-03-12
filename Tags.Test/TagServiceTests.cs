@@ -7,22 +7,31 @@ namespace EFTagTest;
 
 public class TagServiceTests
 {
+    private readonly TestFixture _fixture;
+
+    public TagServiceTests()
+    {
+        this._fixture = new TestFixture();
+        this._fixture.Services
+            .AddEfCoreTags<TestDbContext, Book>()
+            .AddEfCoreTags<TestDbContext, Article>();
+    }
+
     [Fact]
     public async Task Given_EntityAndTagName_When_EntityIsTagged_Should_CreateTaggedEntity()
     {
         // Arrange: create database and query test book instance
-        using var fixture = new TestFixture();
-        fixture.Services.AddEfCoreTagging();
-        var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
-        var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
+        var provider = this._fixture.Services.BuildServiceProvider();
+        var db = provider.GetRequiredService<TestDbContext>();
+        var tagService = provider.GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
+        var book = await db.Books.SingleAsync(x => x.Id == this._fixture.SeededBooks[0].Id);
 
         // Act: tag the test book instance
-        await tagService.TagEntityAsync(book, "Tag");
+        await tagService.SetTagsAsync(book, ["Tag"]);
 
         // Assert: query the tagged entites and check whether entity is tagged
-        var taggedEntity = await db.TaggedEntities_Book
+        var taggedEntity = await (db as ITagDbContext<Book>).TaggedEntities
             .Include(x => x.Entity)
             .Include(x => x.Tag)
             .SingleOrDefaultAsync(x => x.Tag.Name == "Tag");
@@ -36,19 +45,18 @@ public class TagServiceTests
     public async Task Given_EntityAndTagName_When_EntityIsUntagged_Should_RemoveTaggedEntity()
     {
         // Arrange: create database and query test book instance
-        using var fixture = new TestFixture();
-        fixture.Services.AddEfCoreTagging();
-        var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
-        var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
+        var provider = this._fixture.Services.BuildServiceProvider();
+        var db = provider.GetRequiredService<TestDbContext>();
+        var tagService = provider.GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
+        var book = await db.Books.SingleAsync(x => x.Id == this._fixture.SeededBooks[0].Id);
 
         // Act: tag and untag the test book instance
-        await tagService.TagEntityAsync(book, "Tag");
-        await tagService.UnTagEntityAsync(book, "Tag");
+        await tagService.SetTagsAsync(book, ["Tag"]);
+        await tagService.SetTagsAsync(book, []);
 
         // Assert: query the tagged entites and check whether entity is tagged
-        var taggedEntity = await db.TaggedEntities_Book
+        var taggedEntity = await (db as ITagDbContext<Book>).TaggedEntities
             .Include(x => x.Entity)
             .Include(x => x.Tag)
             .SingleOrDefaultAsync(x => x.Tag.Name == "Tag");
@@ -60,17 +68,15 @@ public class TagServiceTests
     public async Task Given_TaggedEntity_When_TagsAreQueried_Should_ReturnTags()
     {
         // Arrange: create database and query test book instance
-        using var fixture = new TestFixture();
-        fixture.Services.AddEfCoreTagging();
-        var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
-        var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
+        var provider = this._fixture.Services.BuildServiceProvider();
+        var db = provider.GetRequiredService<TestDbContext>();
+        var tagService = provider.GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
+        var book = await db.Books.SingleAsync(x => x.Id == this._fixture.SeededBooks[0].Id);
 
         // Act: tag and untag the test book instance
-        await tagService.TagEntityAsync(book, "Tag1");
-        await tagService.TagEntityAsync(book, "Tag2");
-        var tags = await tagService.GetTagsOfEntityAsync(book);
+        await tagService.SetTagsAsync(book, ["Tag1", "Tag2"]);
+        var tags = await tagService.GetTagsAsync(book);
 
         // Assert: query the tagged entites and check whether entity is tagged
         Assert.Equal(2, tags.Count);
@@ -82,16 +88,15 @@ public class TagServiceTests
     public async Task Given_TaggedEntity_When_TaggedEntitiesAreQueried_Should_ReturnTags()
     {
         // Arrange: create database and query test book instance
-        using var fixture = new TestFixture();
-        fixture.Services.AddEfCoreTagging();
-        var db = fixture.Services.BuildServiceProvider().GetRequiredService<TestDbContext>();
-        var tagService = fixture.Services.BuildServiceProvider().GetRequiredService<ITagService<Book>>();
+        var provider = this._fixture.Services.BuildServiceProvider();
+        var db = provider.GetRequiredService<TestDbContext>();
+        var tagService = provider.GetRequiredService<ITagService<Book>>();
 
-        var book = await db.Books.SingleAsync(x => x.Id == fixture.SeededData[0].Id);
+        var book = await db.Books.SingleAsync(x => x.Id == this._fixture.SeededBooks[0].Id);
 
         // Act: tag and untag the test book instance
-        await tagService.TagEntityAsync(book, "Tag");
-        var taggedEntities = await tagService.GetTaggedEntitiesByTag([ "Tag" ]).ToListAsync();
+        await tagService.SetTagsAsync(book, ["Tag"]);
+        var taggedEntities = await tagService.GetTaggedEntitiesAsync([ "Tag" ]).ToListAsync();
 
         // Assert: query the tagged entites and check whether entity is tagged
         Assert.Single(taggedEntities);
