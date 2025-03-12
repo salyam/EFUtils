@@ -25,8 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Comments.Attributes\Comments.Attributes.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="true"/>
-    <ProjectReference Include="..\Comments.SourceGenerator\Comments.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="..\Comments\Comments.csproj" />
   </ItemGroup>
 
 </Project>

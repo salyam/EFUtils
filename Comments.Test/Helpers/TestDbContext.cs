@@ -1,26 +1,37 @@
-using Microsoft.EntityFrameworkCore;
-using Salyam.EFUtils.Comments.Attributes;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Salyam.EFUtils.Comments.Test.Helpers;
 
-public class EntityBase
+public class Book
 {
     public int Id { get; set; } 
-}
-
-[Commentable(typeof(IdentityUser))]
-public class Book : EntityBase
-{
     public required string Title { get; set; } 
     
     public required string Author { get; set; } 
 }
 
-public partial class TestDbContext : IdentityDbContext 
+public class Article
+{
+    public int Id { get; set; } 
+
+    public required string Title { get; set; }
+
+    public required string Content { get; set; } 
+    
+    public required string Author { get; set; } 
+}
+
+
+public partial class TestDbContext : IdentityDbContext, ICommentDbContext<Book, IdentityUser>, ICommentDbContext<Article, IdentityUser>
 {
     public DbSet<Book> Books { get; set; }
+    public DbSet<Article> Articles { get; set; }
+    
+    DbSet<ICommentDbContext<Book, IdentityUser>.CommentModel> ICommentDbContext<Book, IdentityUser>.Comments { get => Set<ICommentDbContext<Book, IdentityUser>.CommentModel>(); }
+
+    DbSet<ICommentDbContext<Article, IdentityUser>.CommentModel> ICommentDbContext<Article, IdentityUser>.Comments { get => Set<ICommentDbContext<Article, IdentityUser>.CommentModel>(); }
 
     public TestDbContext() {}
 
